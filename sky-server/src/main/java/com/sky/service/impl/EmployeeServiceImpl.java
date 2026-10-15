@@ -1,30 +1,83 @@
 package com.sky.service.impl;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
+import org.aspectj.weaver.ast.Var;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
     private EmployeeMapper employeeMapper;
+
+    /**
+     * 员工启用或禁用
+     * @param status
+     * @param id
+     * @return
+     */
+    @Override
+    public Result updateStatus(Integer status, Long id) {
+        Employee employee = Employee.builder()
+                .id(id)
+                .status(status)
+                .updateTime(LocalDateTime.now())
+                .build();
+        employeeMapper.update(employee);
+        return Result.success("修改员工状态成功");
+    }
+
+    /**
+     * 编辑员工
+     * @param employeeDTO
+     * @return
+     */
+    @Override
+    public Result<String> updateEmployee(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);
+        employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateUser(BaseContext.getCurrentId());
+        employeeMapper.update(employee);
+        return Result.success("编辑员工成功");
+    }
+
+    /**
+     * 根据id查询员工
+     * @param id
+     * @return
+     */
+    @Override
+    public Result<Employee> getById(Long id) {
+        if(id == null){
+            return Result.error("员工id不能为空");
+        }
+        Employee em = employeeMapper.getById(id);
+        em.setPassword("*****");
+        return Result.success(em);
+    }
 
     /**
      * 新增员工
@@ -49,9 +102,30 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 
 
-        employeeMapper.insert(employeeDTO);
+        employeeMapper.insert(employee);
         return Result.success("新增员工成功");
     }
+
+    /**
+     * 分页查询员工
+     * @param employeePageQueryDTO
+     * @return
+     */
+    @Override
+    public Result<PageResult> page(EmployeePageQueryDTO employeePageQueryDTO) {
+        PageHelper.startPage(employeePageQueryDTO.getPage(), employeePageQueryDTO.getPageSize());
+        Page<Employee> page = employeeMapper.page(employeePageQueryDTO);
+
+        long total = page.getTotal();
+        List<Employee> result = page.getResult();
+
+        PageResult pageResult = new PageResult(total, result);
+        return Result.success(pageResult);
+
+    }
+
+
+
 
     /**
      * 员工登录

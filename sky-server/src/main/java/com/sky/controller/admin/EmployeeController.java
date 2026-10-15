@@ -3,8 +3,10 @@ package com.sky.controller.admin;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.properties.JwtProperties;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
@@ -12,10 +14,7 @@ import com.sky.vo.EmployeeLoginVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,6 +74,38 @@ public class EmployeeController {
     }
 
     /**
+     * 编辑员工
+     */
+    @PutMapping
+    @ApiOperation("编辑员工")
+    public Result<String> updateEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        log.info("编辑员工：{}", employeeDTO);
+        return employeeService.updateEmployee(employeeDTO);
+    }
+
+    /**
+     * 根据id查询员工
+     */
+    @GetMapping("/{id}")
+    @ApiOperation("根据id查询员工")
+    public Result<Employee> getById(@PathVariable Long id) {
+        log.info("根据id查询员工：id:{}", id);
+        return employeeService.getById(id);
+    }
+
+
+
+
+    /**
+     * 分页查询
+     */
+    @GetMapping("/page")
+    @ApiOperation("分页查询")
+    public Result<PageResult> page(EmployeePageQueryDTO employeePageQueryDTO) {
+        return employeeService.page(employeePageQueryDTO);
+    }
+
+    /**
      * 退出
      *
      * @return
@@ -82,6 +113,16 @@ public class EmployeeController {
     @PostMapping("/logout")
     public Result<String> logout() {
         return Result.success();
+    }
+
+    /**
+     * 修改员工状态
+     */
+    @PostMapping("/status/{status}")
+    @ApiOperation("员工启用或禁用")
+    public Result updateStatus(@PathVariable Integer status, Long id) {
+        log.info("修改员工状态：id:{},statue:{}", id,status);
+        return employeeService.updateStatus(status, id);
     }
 
 }
